@@ -1,10 +1,11 @@
 from rest_framework import serializers
 
-from .models import Movie, Review, Rating
+from .models import Movie, Review, Rating, Actor
 
 
 class FilterReviewListSerializer(serializers.ListSerializer):
     """Фильтр комментариев, только parent"""
+
     def to_representation(self, data):
         data = data.filter(parent=None)
         return super().to_representation(data)
@@ -12,6 +13,7 @@ class FilterReviewListSerializer(serializers.ListSerializer):
 
 class RecursiveSerializer(serializers.Serializer):
     """Вывод рекурсивно chidlren"""
+
     def to_representation(self, value):
         serializer = self.parent.parent.__class__(value, context=self.context)
         return serializer.data
@@ -45,21 +47,9 @@ class ReviewSerializer(serializers.ModelSerializer):
         fields = ('name', 'text', 'children')
 
 
-class MovieDetailSerializer(serializers.ModelSerializer):
-    """Описание фильма"""
-    category = serializers.SlugRelatedField(slug_field='name', read_only=True)
-    directors = serializers.SlugRelatedField(slug_field='name', read_only=True, many=True)
-    actors = serializers.SlugRelatedField(slug_field='name', read_only=True, many=True)
-    genres = serializers.SlugRelatedField(slug_field='name', read_only=True, many=True)
-    reviews = ReviewSerializer(many=True)
-
-    class Meta:
-        model = Movie
-        exclude = ('draft',)
-
-
 class CreateRatingSerializer(serializers.ModelSerializer):
     """Добавление рейтинга пользователя"""
+
     class Meta:
         model = Rating
         fields = ('star', 'movie')
@@ -71,3 +61,32 @@ class CreateRatingSerializer(serializers.ModelSerializer):
             defaults={'star': validated_data.get('star')}
         )
         return rating
+
+
+class ActorListSerializer(serializers.ModelSerializer):
+    """Вывод списка актеров"""
+
+    class Meta:
+        model = Actor
+        fields = ('id', 'name', 'image')
+
+
+class ActorDetailSerializer(serializers.ModelSerializer):
+    """Вывод описания актера"""
+
+    class Meta:
+        model = Actor
+        fields = '__all__'
+
+
+class MovieDetailSerializer(serializers.ModelSerializer):
+    """Описание фильма"""
+    category = serializers.SlugRelatedField(slug_field='name', read_only=True)
+    directors = ActorListSerializer(read_only=True, many=True)
+    actors = ActorListSerializer(read_only=True, many=True)
+    genres = serializers.SlugRelatedField(slug_field='name', read_only=True, many=True)
+    reviews = ReviewSerializer(many=True)
+
+    class Meta:
+        model = Movie
+        exclude = ('draft',)
