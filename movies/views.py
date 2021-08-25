@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Avg
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -17,9 +18,7 @@ class MovieListView(APIView):
                 'ratings',
                 filter=models.Q(ratings__ip=get_client_ip(request)))
         ).annotate(
-            middle_star=
-            models.Sum(models.F('ratings__star')) /
-            models.Count(models.F('ratings'))
+            middle_star=(Avg("ratings__star"))
         )
         serializer = MovieListSerializer(movies, many=True)
         return Response(serializer.data)
