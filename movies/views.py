@@ -23,14 +23,16 @@ class MovieListView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        movies = Movie.objects.filter(draft=False).annotate(
-            rating_user=models.Count(
-                'ratings',
-                filter=models.Q(ratings__ip=get_client_ip(self.request)))
-        ).annotate(
-            middle_star=(Avg("ratings__star"))
+        return (
+            Movie.objects.filter(draft=False)
+            .annotate(
+                rating_user=models.Count(
+                    'ratings',
+                    filter=models.Q(ratings__ip=get_client_ip(self.request)),
+                )
+            )
+            .annotate(middle_star=(Avg("ratings__star")))
         )
-        return movies
 
 
 class MovieDetailView(generics.RetrieveAPIView):
